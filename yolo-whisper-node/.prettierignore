@@ -1,0 +1,7 @@
+dist
+node_modules
+patches
+public
+pnpm-lock.yaml
+*.pt
+.claude

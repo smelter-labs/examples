@@ -1,4 +1,4 @@
-# Smelter demos
+# Example application
 
 ## `@swmansion/smelter-web-client`
 
@@ -14,6 +14,22 @@ To run this project:
 - Start smelter server (e.g. binary from https://github.com/smelter-labs/smelter-rc/releases/tag/62d73800).
 - Go to `./vite-web-client`.
 - Run `pnpm install && pnpm dev`.
+
+## `@swmansion/smelter-node`
+
+Following examples drive a locally-spawned Smelter binary from a Node.js
+process. Inputs and outputs are configured server-side; the browser is just a
+thin UI.
+
+#### `yolo-whisper-node`
+
+Project has three parts:
+- React frontend: UI and webcam streaming in.
+- Node.js backend: controls the video composition.
+- Python sidecar: runs object detection and speech transcription on
+  Smelter's side channel.
+
+Go to `./yolo-whisper-node` and follow the README there.
 
 ## `@swmansion/smelter-web-wasm`
 

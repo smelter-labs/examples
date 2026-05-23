@@ -1,0 +1,16 @@
+node_modules
+dist
+.vite
+
+# Downloaded model weights (re-fetched at runtime by Ultralytics / sidecar).
+yolov8n.pt
+yolov11n-face.pt
+
+# Python sidecar
+__pycache__
+*.pyc
+.venv
+venv
+
+.DS_Store
+*.log
