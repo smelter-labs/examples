@@ -140,11 +140,11 @@ export default function App() {
       {publishError && <p style={{ color: '#ff8080' }}>Publish error: {publishError}</p>}
 
       <p style={{ opacity: 0.7, fontSize: 14, marginTop: 24 }}>
-        Press <b>Start webcam</b> to publish your camera + mic, or <b>Start screenshare</b> to
-        share a screen / window / tab. For screenshare, pick a tab and tick "Share tab audio" if
-        you want Whisper to transcribe the tab's audio. The composed view above is the WHEP
-        stream coming back, with YOLO boxes and Whisper transcript rendered server-side by
-        Smelter. The dropdown switches which COCO class Python looks for.
+        Press <b>Start webcam</b> to publish your camera + mic, or <b>Start screenshare</b> to share
+        a screen / window / tab. For screenshare, pick a tab and tick "Share tab audio" if you want
+        Whisper to transcribe the tab's audio. The composed view above is the WHEP stream coming
+        back, with YOLO boxes and Whisper transcript rendered server-side by Smelter. The dropdown
+        switches which COCO class Python looks for.
       </p>
     </div>
   );

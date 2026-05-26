@@ -8,25 +8,27 @@ import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     tailwindcss(),
     reactRouter(),
     tsconfigPaths(),
-    viteStaticCopy({
-      targets: [
-        {
-          src: path.join(
-            path.dirname(require.resolve('@swmansion/smelter-browser-render')),
-            'smelter.wasm'
-          ),
-          dest: 'assets',
-        },
-      ],
-    }),
+    ...(isSsrBuild
+      ? []
+      : viteStaticCopy({
+          targets: [
+            {
+              src: path.join(
+                path.dirname(require.resolve('@swmansion/smelter-browser-render')),
+                'smelter.wasm'
+              ),
+              dest: 'assets',
+            },
+          ],
+        })),
   ],
   optimizeDeps: {
     exclude: ['@swmansion/smelter-web-wasm'],
     include: ['@swmansion/smelter-web-wasm > pino']
   },
-});
+}));
