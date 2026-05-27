@@ -1,0 +1,62 @@
+name: Examples - check
+
+on:
+    workflow_dispatch: {}
+    push:
+        branches: [main]
+    pull_request:
+        types: [opened, synchronize]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v6
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 11
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+
+            - name: Set up Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: '3.11'
+
+            - name: Install ruff
+              run: pip install ruff
+
+            - name: Check vite+react WASM example
+              working-directory: ./vite-web-wasm
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
+
+            - name: Check vite+react web client example
+              working-directory: ./vite-web-client
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
+
+            - name: Check react-router WASM example
+              working-directory: ./vite-react-router-web-wasm
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run typecheck
+
+            - name: Check Next.js WASM example
+              working-directory: ./nextjs-web-wasm
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
+
+            - name: Check yolo-whisper-node (TS)
+              working-directory: ./yolo-whisper-node
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint && pnpm run format:check
+
+            - name: Check yolo-whisper-node sidecar (Python)
+              working-directory: ./yolo-whisper-node/sidecar
+              run: ruff check . && ruff format --check .

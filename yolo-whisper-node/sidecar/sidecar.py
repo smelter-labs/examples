@@ -192,8 +192,12 @@ async def run_yolo(input_id: str, coco_names: dict[int, str]) -> None:
         try:
             results = await asyncio.to_thread(
                 lambda: YOLO_COCO.track(
-                    rgb, classes=[target_id], conf=YOLO_CONFIDENCE,
-                    persist=True, verbose=False, device="cpu",
+                    rgb,
+                    classes=[target_id],
+                    conf=YOLO_CONFIDENCE,
+                    persist=True,
+                    verbose=False,
+                    device="cpu",
                 )
             )
         except Exception as err:  # noqa: BLE001
@@ -203,9 +207,7 @@ async def run_yolo(input_id: str, coco_names: dict[int, str]) -> None:
         await events_q.put({"type": "yolo", "boxes": boxes, "ts": ts_ms})
 
 
-def boxes_from_results(
-    results, w: int, h: int, names: dict[int, str]
-) -> list[dict]:
+def boxes_from_results(results, w: int, h: int, names: dict[int, str]) -> list[dict]:
     out = []
     for r in results:
         ids_tensor = getattr(r.boxes, "id", None)
@@ -285,9 +287,12 @@ async def _transcribe_and_emit(
     Kicked off with `asyncio.create_task` from the VAD loop so transcribe
     latency doesn't stall audio ingestion — the side-channel queue would
     otherwise back up during transcription and risk losing the next word."""
+
     def _run() -> str:
         segments, _info = model.transcribe(
-            audio, language=WHISPER_LANGUAGE, beam_size=1,
+            audio,
+            language=WHISPER_LANGUAGE,
+            beam_size=1,
         )
         return " ".join(s.text.strip() for s in segments).strip()
 
@@ -299,12 +304,14 @@ async def _transcribe_and_emit(
     if not text:
         return
     log.info("whisper @ %d ms (%d ms): %s", ts_ms, duration_ms, text)
-    await events_q.put({
-        "type": "transcript",
-        "text": text,
-        "ts": ts_ms,
-        "duration": duration_ms,
-    })
+    await events_q.put(
+        {
+            "type": "transcript",
+            "text": text,
+            "ts": ts_ms,
+            "duration": duration_ms,
+        }
+    )
 
 
 async def run_whisper(input_id: str, vad_model, whisper_model: WhisperModel) -> None:

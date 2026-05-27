@@ -75,4 +75,3 @@ SKIP_PYTHON=1 pnpm server
 export SMELTER_SIDE_CHANNEL_SOCKET_DIR=/tmp/smelter-sidechan-XXXXXX
 python3 sidecar/sidecar.py
 ```
-
