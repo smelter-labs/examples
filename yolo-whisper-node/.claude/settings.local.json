@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/wojtek/smelter/examples/**)",
+      "Read(//home/wojtek/smelter/**)"
+    ]
+  }
+}
