@@ -37,6 +37,9 @@ jobs:
             - name: Install ruff
               run: pip install ruff
 
+            - name: Exempt first-party packages from release-age check
+              run: pnpm config set minimumReleaseAgeExclude '@swmansion/*' --location=global
+
             - name: Check vite+react WASM example
               working-directory: ./vite-web-wasm
               run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
