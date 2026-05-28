@@ -9,7 +9,7 @@
       perSystem = { config, self', inputs', pkgs, system, lib, ... }:
         let
           # Native libs the Smelter binary (auto-spawned by @swmansion/smelter-node)
-          # dynamically links against — see yolo-whisper-node.
+          # dynamically links against — see node-yolo-whisper.
           smelterRuntimeLibs = with pkgs; [
             libopus
             openssl
@@ -54,7 +54,7 @@
             doCheck = false;
           };
 
-          # Python environment for the yolo-whisper-node sidecar.
+          # Python environment for the node-yolo-whisper sidecar.
           pythonEnv = pkgs.python3.withPackages (ps: with ps; [
             ultralytics
             faster-whisper
