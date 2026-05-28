@@ -1,0 +1,6 @@
+node_modules
+dist
+.smelter
+output.mp4
+*.log
+.DS_Store
