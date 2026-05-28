@@ -18,8 +18,22 @@ To run this project:
 ## `@swmansion/smelter-node`
 
 Following examples drive a locally-spawned Smelter binary from a Node.js
-process. Inputs and outputs are configured server-side; the browser is just a
-thin UI.
+process. Inputs and outputs are configured server-side.
+
+#### `node-minimal`
+
+A single-file, real-time example. Smelter composes a scene and streams it over
+RTMP; a development helper previews the output locally with `ffplay`.
+
+Go to `./node-minimal` and run `pnpm install && pnpm start`.
+
+#### `node-offline`
+
+A single-file, offline-processing example. It stitches one or more MP4 files
+together into a single `output.mp4`.
+
+Go to `./node-offline` and run `pnpm install && pnpm start` (pass MP4 paths or
+URLs as arguments to use your own files).
 
 #### `yolo-whisper-node`
 

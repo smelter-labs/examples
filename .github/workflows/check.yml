@@ -60,6 +60,14 @@ jobs:
               working-directory: ./yolo-whisper-node
               run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint && pnpm run format:check
 
+            - name: Check node-minimal example
+              working-directory: ./node-minimal
+              run: pnpm install --frozen-lockfile && pnpm run typecheck && pnpm run lint && pnpm run format:check
+
+            - name: Check node-offline example
+              working-directory: ./node-offline
+              run: pnpm install --frozen-lockfile && pnpm run typecheck && pnpm run lint && pnpm run format:check
+
             - name: Check yolo-whisper-node sidecar (Python)
               working-directory: ./yolo-whisper-node/sidecar
               run: ruff check . && ruff format --check .
