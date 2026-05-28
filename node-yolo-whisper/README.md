@@ -35,7 +35,7 @@ Install the Python deps from `sidecar/requirements.txt`.
 ## Setup
 
 ```bash
-cd yolo-whisper-node
+cd node-yolo-whisper
 pnpm install
 pip install -r sidecar/requirements.txt
 ```

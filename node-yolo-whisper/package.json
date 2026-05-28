@@ -1,5 +1,5 @@
 {
-  "name": "yolo-whisper-node",
+  "name": "node-yolo-whisper",
   "private": true,
   "version": "0.0.0",
   "type": "module",

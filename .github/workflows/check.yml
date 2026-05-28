@@ -40,26 +40,6 @@ jobs:
             - name: Exempt first-party packages from release-age check
               run: pnpm config set minimumReleaseAgeExclude '@swmansion/*' --location=global
 
-            - name: Check vite+react WASM example
-              working-directory: ./vite-web-wasm
-              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
-
-            - name: Check vite+react web client example
-              working-directory: ./vite-web-client
-              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
-
-            - name: Check react-router WASM example
-              working-directory: ./vite-react-router-web-wasm
-              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run typecheck
-
-            - name: Check Next.js WASM example
-              working-directory: ./nextjs-web-wasm
-              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
-
-            - name: Check yolo-whisper-node (TS)
-              working-directory: ./yolo-whisper-node
-              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint && pnpm run format:check
-
             - name: Check node-minimal example
               working-directory: ./node-minimal
               run: pnpm install --frozen-lockfile && pnpm run typecheck && pnpm run lint && pnpm run format:check
@@ -68,6 +48,26 @@ jobs:
               working-directory: ./node-offline
               run: pnpm install --frozen-lockfile && pnpm run typecheck && pnpm run lint && pnpm run format:check
 
-            - name: Check yolo-whisper-node sidecar (Python)
-              working-directory: ./yolo-whisper-node/sidecar
+            - name: Check node-yolo-whisper (TS)
+              working-directory: ./node-yolo-whisper
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint && pnpm run format:check
+
+            - name: Check node-yolo-whisper sidecar (Python)
+              working-directory: ./node-yolo-whisper/sidecar
               run: ruff check . && ruff format --check .
+
+            - name: Check web-client-vite example
+              working-directory: ./web-client-vite
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
+
+            - name: Check web-wasm-vite example
+              working-directory: ./web-wasm-vite
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint
+
+            - name: Check web-wasm-react-router example
+              working-directory: ./web-wasm-react-router
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run typecheck
+
+            - name: Check web-wasm-nextjs example
+              working-directory: ./web-wasm-nextjs
+              run: pnpm install --frozen-lockfile && pnpm run build && pnpm run lint

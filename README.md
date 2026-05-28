@@ -1,73 +1,78 @@
-# Example application
+# Smelter examples
 
-## `@swmansion/smelter-web-client`
+A collection of self-contained example apps built with the [Smelter](https://smelter.dev)
+TypeScript SDK. [Smelter](https://github.com/software-mansion/smelter) is a toolkit for
+real-time, low-latency, programmable video and audio composition, where scenes are described
+with React components.
 
-Following examples show how to control Smelter server instance from the browser. In those examples,
-browser will execute React code via the `@swmansion/smelter-web-client` package and send scene update
-requests to the Smelter server
+Each example lives in its own directory and is independent — pick one, install its
+dependencies, and run it. Examples are grouped by the Smelter runtime package they use:
 
-#### `vite-web-client`
+- **[`@swmansion/smelter-node`](#swmansionsmelter-node)** — run Smelter from a Node.js process.
+- **[`@swmansion/smelter-web-client`](#swmansionsmelter-web-client)** — drive a remote Smelter server from the browser.
+- **[`@swmansion/smelter-web-wasm`](#swmansionsmelter-web-wasm)** — run Smelter entirely in the browser via WebAssembly.
 
-Project generated with `pnpm create vite` from `React`+`SWC` template.
+## Prerequisites
 
-To run this project:
-- Start smelter server (e.g. binary from https://github.com/smelter-labs/smelter-rc/releases/tag/62d73800).
-- Go to `./vite-web-client`.
-- Run `pnpm install && pnpm dev`.
+- [Node.js](https://nodejs.org) 24+ and [pnpm](https://pnpm.io).
+- `ffmpeg` and `ffplay` on your `PATH` — only needed by the Node.js examples that preview
+  their output locally.
+
+## Running an example
+
+Every example follows the same flow:
+
+```bash
+cd <example-directory>
+pnpm install
+pnpm start   # or `pnpm dev` for the browser examples
+```
+
+The exact command per example is listed below.
 
 ## `@swmansion/smelter-node`
 
-Following examples drive a locally-spawned Smelter binary from a Node.js
-process. Inputs and outputs are configured server-side.
+Drive a locally-spawned Smelter binary from a Node.js process — the package downloads and
+manages the binary for you. Inputs and outputs are configured server-side.
 
-#### `node-minimal`
+| Example | Command | What it shows |
+| --- | --- | --- |
+| [`node-minimal`](./node-minimal) | `pnpm start` | Real-time processing: compose a scene, stream it over RTMP, and preview the output with `ffplay`. |
+| [`node-offline`](./node-offline) | `pnpm start [files…]` | Offline processing: stitch one or more MP4 files into a single `output.mp4`. |
+| [`node-yolo-whisper`](./node-yolo-whisper) | see its [README](./node-yolo-whisper) | A full app: React frontend, Node.js backend, and a Python sidecar running YOLO object detection and Whisper transcription over Smelter's side channel. |
 
-A single-file, real-time example. Smelter composes a scene and streams it over
-RTMP; a development helper previews the output locally with `ffplay`.
+## `@swmansion/smelter-web-client`
 
-Go to `./node-minimal` and run `pnpm install && pnpm start`.
+Control a separate, already-running Smelter server from the browser. React code runs in the
+browser and sends scene-update requests to the server.
 
-#### `node-offline`
+| Example | Command | What it shows |
+| --- | --- | --- |
+| [`web-client-vite`](./web-client-vite) | `pnpm dev` | A Vite + React UI that connects to a Smelter server and updates the composition live. |
 
-A single-file, offline-processing example. It stitches one or more MP4 files
-together into a single `output.mp4`.
-
-Go to `./node-offline` and run `pnpm install && pnpm start` (pass MP4 paths or
-URLs as arguments to use your own files).
-
-#### `yolo-whisper-node`
-
-Project has three parts:
-- React frontend: UI and webcam streaming in.
-- Node.js backend: controls the video composition.
-- Python sidecar: runs object detection and speech transcription on
-  Smelter's side channel.
-
-Go to `./yolo-whisper-node` and follow the README there.
+> Requires a running Smelter server. See the [Smelter documentation](https://smelter.dev/docs)
+> for how to start one.
 
 ## `@swmansion/smelter-web-wasm`
 
-Following examples show how you can use Smelter to render video inside the browser. All of them
-do not require any additional infrastructure, and are fully self-contained.
+Run Smelter inside the browser via WebAssembly. These examples are fully self-contained and
+need no server or extra infrastructure (Chromium-based browsers only).
 
-#### `vite-web-wasm`
+| Example | Command | What it shows |
+| --- | --- | --- |
+| [`web-wasm-vite`](./web-wasm-vite) | `pnpm dev` | A Vite + React app that renders a composition to a `<canvas>`. |
+| [`web-wasm-react-router`](./web-wasm-react-router) | `pnpm dev` | A React Router app with two pages: canvas rendering, and WebRTC (WHIP) output with a `<video>` preview. Both let you add camera and screen share to the scene. |
+| [`web-wasm-nextjs`](./web-wasm-nextjs) | `pnpm dev` | A Next.js app (pinned to 14.2.24 for compatibility with the React version Smelter uses). |
 
-Project generated with `pnpm create vite` from `React`+`SWC` template.
+## Learn more
 
-Go to `./vite-web-wasm` and run `pnpm install && pnpm dev`.
+- [Documentation](https://smelter.dev/docs)
+- [Guides](https://www.smelter.dev/ts-sdk/guides/quick-start/)
+- [Smelter on GitHub](https://github.com/software-mansion/smelter)
+- [Discord](https://discord.gg/Cxj3rzTTag)
 
-#### `vite-react-router-web-wasm`
+## Smelter is created by Software Mansion
 
-Project generated with `pnpm create vite` from React Router template. It includes
-following pages:
-- In-browser Smelter that renders on canvas. You can add camera and screen share to the scene.
-- In-browser Smelter that streams output over WebRTC (WHIP protocol) and displays preview using
-in a `<video />` tag. You can add camera and screen share to the scene.
+<a href="https://swmansion.com"><img width="150" height="80" alt="Software Mansion" src="https://github.com/user-attachments/assets/cacd6185-78b0-4e76-8767-016d6389bb2b" /></a>
 
-Go to `./vite-react-router-web-wasm` and run `pnpm install && pnpm dev`.
-
-##### `nextjs-web-wasm`
-
-The project was generated using `pnpm create next-app@14.2.24`. Next.js version 14.2.24 was chosen to ensure compatibility with the version of React used in Smelter, as newer Next.js releases are not fully compatible.
-
-Go to `./nextjs-web-wasm` and run `pnpm install && pnpm dev`.
+Since 2012, [Software Mansion](https://swmansion.com) is a software agency with experience in building web and mobile apps as well as complex multimedia solutions. We are Core React Native Contributors and experts in live streaming and broadcasting technologies. We can help you build your next dream product – [Hire us](https://swmansion.com/contact/projects?utm_source=smelter&utm_medium=readme).
