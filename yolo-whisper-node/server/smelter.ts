@@ -36,7 +36,6 @@ export class SmelterApp {
     this.sideChannelDelayMs = cfg.sideChannelDelayMs ?? 12000;
     this.socketDir = mkdtempSync(join(tmpdir(), 'smelter-sidechan-'));
     process.env.SMELTER_SIDE_CHANNEL_SOCKET_DIR = this.socketDir;
-    process.env.SMELTER_SIDE_CHANNEL_DELAY_MS = String(this.sideChannelDelayMs);
     // Best-effort cleanup of the unix-socket scratch dir on Ctrl-C.
     process.on('SIGINT', () => {
       try {
@@ -68,7 +67,7 @@ export class SmelterApp {
     const cam = await smelter.registerInput('cam', {
       type: 'whip_server',
       bearerToken: this.cfg.whipToken,
-      sideChannel: { video: true, audio: true },
+      sideChannel: { video: true, audio: true, delayMs: this.sideChannelDelayMs },
     });
 
     await smelter.start();
