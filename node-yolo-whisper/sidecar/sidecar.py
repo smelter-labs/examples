@@ -20,34 +20,98 @@ import numpy as np
 
 faulthandler.enable()
 
-# Important: load Ultralytics and warm up the model BEFORE importing
-# faster-whisper. faster-whisper's backend (CTranslate2) arms floating-
-# point exception traps process-wide, which makes Ultralytics' one-time
-# Conv+BN fuse on first predict abort with SIGFPE. After the warm-up
-# runs with a clean FP env, the fused weights are cached and subsequent
-# predicts coexist with CTranslate2 fine.
+# Load Ultralytics and warm the model up once at startup so its one-time
+# Conv+BN fuse and kernel JIT happen here rather than stalling the first real
+# frame. torch is imported alongside (Ultralytics already pulls it in) so we
+# can resolve the compute device *before* the warm-up and cache the fused
+# weights for the device we'll actually run on.
+#
+# Note: both YOLO (Ultralytics) and Whisper (HF transformers, see below) run on
+# the same torch backend. On an AMD GPU that's torch's ROCm build, which still
+# exposes the `cuda` device string and `torch.cuda.*` API — hence DEVICE="cuda"
+# selects the AMD card just as it would an NVIDIA one.
 from ultralytics import YOLO  # noqa: E402
+import torch  # noqa: E402
+
+
+def _select_device() -> str:
+    """Resolve the torch device to run on. Defaults to the GPU when one is
+    present (ROCm GPUs report through the `cuda` API too); override with
+    DEVICE=cpu, or DEVICE=cuda to force/assert GPU use."""
+    requested = os.environ.get("DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
+    if requested.startswith("cuda") and not torch.cuda.is_available():
+        print(
+            "[python] DEVICE=cuda requested but no GPU is available to torch; "
+            "falling back to CPU",
+            file=sys.stderr,
+            flush=True,
+        )
+        return "cpu"
+    return requested
+
+
+DEVICE = _select_device()
+
+
+def _ensure_gpu_nms() -> None:
+    """Ultralytics' detection post-processing calls ``torchvision.ops.nms``,
+    but some torchvision builds ship without a GPU build of their custom ops
+    (notably nixpkgs' torchvision, which currently has no ROCm support) — so
+    nms only works on CPU tensors and raises on GPU ones. Probe for a working
+    GPU kernel; if it's missing, wrap nms to run on CPU and map the kept
+    indices back to the original device. nms handles a few hundred boxes, so
+    the round-trip is negligible next to the GPU backbone. Self-disabling: if
+    torchvision ever gains GPU ops, the probe succeeds and nothing is patched.
+    """
+    import torchvision
+
+    if not torch.cuda.is_available():
+        return
+    probe_boxes = torch.tensor([[0.0, 0.0, 1.0, 1.0]], device="cuda")
+    probe_scores = torch.tensor([1.0], device="cuda")
+    try:
+        torchvision.ops.nms(probe_boxes, probe_scores, 0.5)
+        return
+    except NotImplementedError:
+        pass
+
+    orig_nms = torchvision.ops.nms
+
+    def nms_cpu_fallback(
+        boxes: torch.Tensor, scores: torch.Tensor, iou_threshold: float
+    ) -> torch.Tensor:
+        if boxes.is_cuda:
+            keep = orig_nms(boxes.cpu(), scores.cpu(), iou_threshold)
+            return keep.to(boxes.device)
+        return orig_nms(boxes, scores, iou_threshold)
+
+    setattr(torchvision.ops, "nms", nms_cpu_fallback)
+    print(
+        "[python] torchvision GPU nms unavailable — using CPU-fallback shim",
+        file=sys.stderr,
+        flush=True,
+    )
 
 
 def _warmup(model: YOLO) -> None:
-    model.to("cpu")
+    model.to(DEVICE)
     dummy = np.zeros((180, 320, 3), dtype=np.uint8)
-    model.predict(dummy, verbose=False, device="cpu")
+    model.predict(dummy, verbose=False, device=DEVICE)
 
 
-print("[python] loading + warming up YOLO model…", file=sys.stderr, flush=True)
+print(f"[python] loading + warming up YOLO model on {DEVICE}…", file=sys.stderr, flush=True)
+_ensure_gpu_nms()
 YOLO_COCO = YOLO("yolov8n.pt")
 _warmup(YOLO_COCO)
 COCO_NAMES: dict[int, str] = YOLO_COCO.names  # type: ignore[assignment]
 print("[python] YOLO ready", file=sys.stderr, flush=True)
 
-# Safe to load PyAV-backed deps now.
-import torch  # noqa: E402
+# Remaining deps.
 import websockets  # noqa: E402
-from faster_whisper import WhisperModel  # noqa: E402
 from silero_vad import VADIterator, load_silero_vad  # noqa: E402
 from smelter import list_channels  # noqa: E402
 from smelter.aio import subscribe_audio_channel, subscribe_video_channel  # noqa: E402
+from transformers import Pipeline, pipeline  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO, format="[python] %(message)s", stream=sys.stderr
@@ -84,6 +148,12 @@ VAD_PREROLL_WINDOWS = 6
 # new segment from the current window onward.
 VAD_MAX_SEGMENT_MS = 8000
 WHISPER_LANGUAGE: str | None = "en"
+WHISPER_MODEL_ID = os.environ.get("WHISPER_MODEL", "openai/whisper-base")
+# float16 on GPU (incl. ROCm), float32 on CPU. fp16 on CPU is slow/unsupported.
+WHISPER_DTYPE = torch.float16 if DEVICE.startswith("cuda") else torch.float32
+# Serialize transcription so overlapping utterances don't run concurrent
+# forward passes on the same model/GPU — see `_transcribe_and_emit`.
+_whisper_lock = asyncio.Lock()
 
 
 @dataclass
@@ -99,10 +169,15 @@ events_q: asyncio.Queue[dict] = asyncio.Queue(maxsize=64)
 
 
 async def main() -> None:
-    log.info("loading Whisper + Silero VAD models…")
+    log.info("loading Whisper (%s, %s) + Silero VAD models…", WHISPER_MODEL_ID, DEVICE)
     whisper_model, vad_model = await asyncio.to_thread(
         lambda: (
-            WhisperModel("base", device="cpu", compute_type="int8"),
+            pipeline(
+                "automatic-speech-recognition",
+                model=WHISPER_MODEL_ID,
+                device=DEVICE,
+                dtype=WHISPER_DTYPE,
+            ),
             load_silero_vad(),
         )
     )
@@ -197,7 +272,7 @@ async def run_yolo(input_id: str, coco_names: dict[int, str]) -> None:
                     conf=YOLO_CONFIDENCE,
                     persist=True,
                     verbose=False,
-                    device="cpu",
+                    device=DEVICE,
                 )
             )
         except Exception as err:  # noqa: BLE001
@@ -281,23 +356,27 @@ async def stream_16k_windows(input_id: str):
 
 
 async def _transcribe_and_emit(
-    model: WhisperModel, audio: np.ndarray, ts_ms: int, duration_ms: int
+    model: Pipeline, audio: np.ndarray, ts_ms: int, duration_ms: int
 ) -> None:
     """Background task: run whisper on `audio` and emit the transcript.
     Kicked off with `asyncio.create_task` from the VAD loop so transcribe
     latency doesn't stall audio ingestion — the side-channel queue would
-    otherwise back up during transcription and risk losing the next word."""
+    otherwise back up during transcription and risk losing the next word.
+
+    The actual forward pass runs in a worker thread (so the event loop keeps
+    draining audio) but is guarded by `_whisper_lock` so two overlapping
+    utterances don't hit the model/GPU concurrently."""
 
     def _run() -> str:
-        segments, _info = model.transcribe(
-            audio,
-            language=WHISPER_LANGUAGE,
-            beam_size=1,
+        result = model(
+            {"raw": audio, "sampling_rate": VAD_SAMPLE_RATE},
+            generate_kwargs={"language": WHISPER_LANGUAGE, "task": "transcribe"},
         )
-        return " ".join(s.text.strip() for s in segments).strip()
+        return result["text"].strip()
 
     try:
-        text = await asyncio.to_thread(_run)
+        async with _whisper_lock:
+            text = await asyncio.to_thread(_run)
     except Exception as err:  # noqa: BLE001 — never let one failure halt captions
         log.warning("whisper failed: %s", err)
         return
@@ -314,7 +393,7 @@ async def _transcribe_and_emit(
     )
 
 
-async def run_whisper(input_id: str, vad_model, whisper_model: WhisperModel) -> None:
+async def run_whisper(input_id: str, vad_model, whisper_model: Pipeline) -> None:
     """VAD-gated utterance transcription.
 
     For each 16 kHz window of incoming side-channel audio, run Silero
