@@ -1,6 +1,9 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Smelter compositor binary, built from source at the v0.6.0 tag.
+    # The flake lives in the tools/nix subdirectory of the repo.
+    smelter.url = "github:software-mansion/smelter/v0.6.0?dir=tools/nix";
   };
 
   outputs = inputs@{ flake-parts, ... }:
@@ -8,15 +11,10 @@
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, lib, ... }:
         let
-          # Native libs the Smelter binary (auto-spawned by @swmansion/smelter-node)
-          # dynamically links against — see node-yolo-whisper.
-          smelterRuntimeLibs = with pkgs; [
-            libopus
-            openssl
-            ffmpeg
-            vulkan-loader
-            stdenv.cc.cc.lib
-          ];
+          # Smelter compositor binary built from the v0.6.0 tag (tools/nix flake).
+          # @swmansion/smelter-node uses SMELTER_PATH instead of downloading a
+          # prebuilt binary when it is set — see the devShell shellHook below.
+          smelter = inputs'.smelter.packages.default;
 
           # smelter-sdk is not yet packaged in nixpkgs; build it from the
           # upstream wheel. Pure-python, only numpy at runtime.
@@ -74,10 +72,11 @@
                 ty
                 ruff
                 pythonEnv
-              ] ++ smelterRuntimeLibs;
+                ffmpeg
+              ];
 
               shellHook = ''
-                export LD_LIBRARY_PATH=${lib.makeLibraryPath smelterRuntimeLibs}:$LD_LIBRARY_PATH
+                export SMELTER_PATH=${smelter}/bin/smelter
               '';
             };
           };
