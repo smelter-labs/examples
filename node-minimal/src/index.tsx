@@ -78,7 +78,7 @@ async function run() {
     type: 'rtmp_client',
     url: `rtmp://127.0.0.1:${RTMP_PORT}`,
     video: {
-      encoder: { type: 'ffmpeg_h264', preset: 'veryfast' },
+      encoder: { type: 'ffmpeg_h264', ffmpegOptions: { preset: 'veryfast' } },
       resolution: { width: 1920, height: 1080 },
     },
   });

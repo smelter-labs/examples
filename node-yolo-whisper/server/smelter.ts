@@ -58,7 +58,7 @@ export class SmelterApp {
       type: 'whep_server',
       bearerToken: this.cfg.whepToken,
       video: {
-        encoder: { type: 'ffmpeg_h264', preset: 'ultrafast' },
+        encoder: { type: 'ffmpeg_h264', ffmpegOptions: { preset: 'ultrafast' } },
         resolution: this.cfg.outputResolution ?? { width: 1280, height: 720 },
       },
       audio: { encoder: { type: 'opus' } },
