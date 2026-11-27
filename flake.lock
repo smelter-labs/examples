@@ -244,7 +244,7 @@
       "locked": {
         "dir": "tools/nix",
         "lastModified": 1795623383,
-        "narHash": "sha256-JT+Cta0QdslW1xTmW9Kq/CfZSbQ6Z3EC6kZHzPX1FGM=",
+        "narHash": "sha256-05zYrLfm1TCCn4ZgSlVjyojJwuu40y6dgh451/1mq3I=",
         "owner": "software-mansion",
         "repo": "smelter",
         "rev": "9211c89888a1b2302c2849db23a22c6be5160b53",
