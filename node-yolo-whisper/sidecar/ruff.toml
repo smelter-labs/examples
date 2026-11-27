@@ -1,0 +1,5 @@
+[lint]
+# The late imports in sidecar.py are intentional (see the comment above them)
+# and carry `noqa: E402`. Keep E402 enabled explicitly so those directives
+# stay meaningful on ruff versions whose default rule set omits it.
+extend-select = ["E402"]
