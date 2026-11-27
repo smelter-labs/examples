@@ -191,17 +191,16 @@ async def run_yolo(input_id: str, coco_names: dict[int, str]) -> None:
             continue
         try:
             results = await asyncio.to_thread(
-                lambda: YOLO_COCO.track(
-                    rgb,
-                    classes=[target_id],
-                    conf=YOLO_CONFIDENCE,
-                    persist=True,
-                    verbose=False,
-                    device="cpu",
-                )
+                YOLO_COCO.track,
+                rgb,
+                classes=[target_id],
+                conf=YOLO_CONFIDENCE,
+                persist=True,
+                verbose=False,
+                device="cpu",
             )
-        except Exception as err:  # noqa: BLE001
-            log.exception("YOLO predict failed: %s", err)
+        except Exception:
+            log.exception("YOLO predict failed")
             continue
         boxes = boxes_from_results(results, w, h, coco_names)
         await events_q.put({"type": "yolo", "boxes": boxes, "ts": ts_ms})
@@ -385,7 +384,7 @@ def resample_to_16k(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     if sample_rate == 16000:
         return audio
     ratio = 16000 / sample_rate
-    target_len = int(round(audio.shape[0] * ratio))
+    target_len = round(audio.shape[0] * ratio)
     if target_len <= 0:
         return audio
     x_old = np.linspace(0.0, 1.0, audio.shape[0], endpoint=False)
